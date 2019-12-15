@@ -1,36 +1,41 @@
-const express = require('express');
-const mongoose = require('mongoose');
-const createError = require('http-errors');
+const express = require("express");
+const mongoose = require("mongoose");
+const createError = require("http-errors");
 
 const app = express();
 app.use(express.json());
-app.use(express.urlencoded({extended: false}));
+app.use(express.urlencoded({ extended: false }));
 
 mongoose
-  .connect(
-    `mongodb://localhost:27017/express-tdd-mocha`, {useNewUrlParser: true}
-  )
-  .then(() => {
-    app.listen(8000);
+  .connect("mongodb://localhost/tddDB", {
+    useNewUrlParser: true,
+    useCreateIndex: true,
+    useFindAndModify: false
   })
+  .then(() =>
+    console.log(`Connected to MongoDB at mongodb://localhost/tddDB...`)
+  )
   .catch(err => {
-    console.log(err);
+    console.log("Failed to connect to MongoDB...", err);
+    process.exit();
   });
 
-const userRouter = require('./routes/user');
+const usersRouter = require("./routes/user");
 
-app.use("/api/users", userRouter);
+app.use("/api/users", usersRouter);
 
-app.use((request, response, error) => {
+app.use((req, res, next) => {
   next(createError(404));
 });
 
-app.use((request, response, error) => {
-  response.locals.message = error.message;
-  response.status(error.status || 500);
-  response.send(error);
+// error handler
+app.use(function(err, req, res, next) {
+  // set locals, only providing error in development
+  res.locals.message = err.message;
+
+  // render the error page
+  res.status(err.status || 500);
+  res.send(err);
 });
 
 module.exports = app;
-
-
